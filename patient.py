@@ -41,6 +41,7 @@ def pt_details(pt_entry):
     if len(key_check) > 0:
         for i in key_check:
             pt_record[i] = pt_entry[i]
+            print(f'Key added: {pt_record[i]}')
     return pt_record 
 
 def check_keys(key_list):
