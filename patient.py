@@ -1,70 +1,57 @@
 from fhir.resources.patient import Patient
 from fhir.resources.identifier import Identifier
-
-
+from fhir.resources.humanname import HumanName
+from fhir.resources.address import Address
+from fhir.resources.extension import Extension
 
 class new_patient:
     def __init__(self,record):
         self.pt_details = pt_details(record)
-        self.pt_identifiers = pt_identifiers(record)
-        self.pt_details = pt_details(record)
+        self.pt_extensions = pt_extensions(record)
         
     def merge_record(self): 
         #merges the three dictionaries
-        p = self.pt_details | self.pt_identifiers | self.pt_details
+        p = self.pt_details | self.pt_extensions
         return p
 
-def pt_details(pt_entry): 
+def pt_details(patient): 
     #Call key check function
-    key_check = check_keys(pt_entry.keys())
-    
-    # add expected keys to pt_record dictionary
-    pt_record = {
-        'id':pt_entry['id'],
-        'title': pt_entry['name'][0]['prefix'][0],
-        'family_name': pt_entry['name'][0]['family'],
-        'given_name': pt_entry['name'][0]['given'][0],
-        'phone_number': pt_entry['telecom'][0]['value'],
-        'phone_type': pt_entry['telecom'][0]['use'],
-        'gender': pt_entry.get('gender'),
-        'birth_date': pt_entry.get('birthDate'),
-        'date_of_death': pt_entry.get('deceasedDateTime'),
-        'address': pt_entry['address'][0]['line'][0],
-        'city': pt_entry['address'][0]['city'],
-        'state': pt_entry['address'][0]['state'],
-        'country': pt_entry['address'][0]['country'],
-        'marital': pt_entry['maritalStatus']['coding'][0]['code'],
-        'multipleBirth': pt_entry.get('multipleBirthBoolean'),
-        'communication': pt_entry['communication'][0]['language']['coding'][0]['code']
-    }
-    #If a key is not part of the expected keys dictionary add it to the dictionary
-    if len(key_check) > 0:
-        for i in key_check:
-            pt_record[i] = pt_entry[i]
-            print(f'Key added: {pt_record[i]}')
-    return pt_record 
-
-def check_keys(key_list):
-        expected_keys = ['resourceType', 'id', 'meta', 'text', 'extension', 'identifier', 'name', 'telecom', 'gender', 'birthDate', 'deceasedDateTime', 'address', 'maritalStatus', 'multipleBirthBoolean', 'communication']
-        err = []
-        for i in key_list:
-            if i not in expected_keys:
-                err.append(i)
-                print(f'{i} not in keys')
-        return err
-
-
-def pt_identifiers(patient):
-    identifiers = {}
-    #validate identifiers 
+    #key_check = check_keys(pt_entry.keys())
     p = Patient.parse_obj(patient)
-    validate = isinstance(p.identifier[0],Identifier)
 
-    if validate == True:
-        for i in patient['identifier']:
-            if i.get('type') != None:
-                identifiers[i['type']['text']] = i['value']
-        return(identifiers)
+    pt_record = {
+        'id':p.id,
+        'active':p.active,
+        'title': p.name[0].prefix[0],
+        'given_name': p.name[0].given[0],
+        'family_name': p.name[0].family[0],
+        'family_name': patient['name'][0]['family'],
+        'given_name': patient['name'][0]['given'][0],
+        'phone_number': p.telecom[0].value,
+        'phone_type': p.telecom[0].use,
+        'gender': p.gender,
+        'birth_date': p.birthDate,
+        'deceased_boolean': p.deceasedBoolean,
+        'deceased_date': p.deceasedDateTime,
+        'address': p.address[0].line[0],
+        'city': p.address[0].city,
+        'state': p.address[0].state,
+        'country': p.address[0].country,
+        'marital': p.maritalStatus.coding[0].display,
+        'multipleBirth': p.multipleBirthBoolean,
+        'multipleBirthInteger': p.multipleBirthInteger,
+        "photo": p.photo,
+        "contact": p.contact,
+        'communication': p.communication[0].language.coding[0].code,
+        'preferred': p.communication[0].preferred,
+        'generalPractitioner': p.generalPractitioner,
+        'managingOrganization': p.managingOrganization,
+        'medical_record_number': p.identifier[1].value,
+        'social_security_number':p.identifier[2].value,
+        'driving_license':p.identifier[3].value,
+        'passport_number': p.identifier[4].value
+    }
+    return pt_record
     
 def pt_extensions(pt_entry):
     url_reference = {
