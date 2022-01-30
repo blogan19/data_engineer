@@ -1,6 +1,7 @@
 # data_engineer
 
 
-To improve: 
-    - Validation of patient details can be improved using fhir.resources
-    - Doesn't handle additional records types very well i.e. a change in structure to patient identfiers or extensions will cause it to fail
+To implement: 
+    - method overwriting patients records with updated details 
+    - Doesn't handle all resource types yet or unexpected resource types
+    - implement a sql database rather than csv based data storage
