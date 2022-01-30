@@ -4,39 +4,66 @@ import requests
 from patient import new_patient
 from condition import new_condition
 from os.path import exists
+from get_test_urls import get_patients
 
 def test():
-    r1 = 'https://raw.githubusercontent.com/emisgroup/exa-data-eng-assessment/main/data/Aaron697_Dickens475_8c95253e-8ee8-9ae8-6d40-021d702dc78e.json'
-    r2 = 'https://raw.githubusercontent.com/emisgroup/exa-data-eng-assessment/main/data/Aaron697_Jerde200_6fa23508-960e-ff22-c3d0-0519a036543b.json'
-    r3 =  'https://raw.githubusercontent.com/emisgroup/exa-data-eng-assessment/main/data/Abbey813_Price929_83524678-9bff-93b7-ef89-d7f5390072ff.json'
-    r4 = 'https://raw.githubusercontent.com/emisgroup/exa-data-eng-assessment/main/data/Beth967_Hansen121_4e343b0a-8698-b6dd-64c6-c2d2d0959e6e.json'
-    url = r4
-    read_data(url)
+    url = get_patients()
+    data = requests.get(url)     
+    if data.status_code == 200:
+        data = data.json()  
+        read_data(data)
+    else:
+        test()     
 
 #Get data from url
-def read_data(url):
+def read_data(data):
     try:
-        data = requests.get(url)     
-        data = data.json()        
+         
         for counter, i in enumerate(data['entry']):
             resource = i['resource']['resourceType']
         
             if resource == 'Patient':
+
+                #Create patient
                 patient = create_patient(data, counter)
+
                 if exists('csv_files/patient.csv') == False: 
-                    df = pd.DataFrame.from_dict([patient])
-                    df.to_csv('csv_files/patient.csv')
+                    df = pd.DataFrame([patient])
+                    df.to_csv('csv_files/patient.csv', index=False)
                 else:
                     df = pd.read_csv('csv_files/patient.csv')
-                    df_newRecord = pd.DataFrame.from_dict([patient])
-                    df = df.append(df_newRecord, ignore_index = True)
+                    
+                    #check to see if record already exists
+                    pt_id = patient['id']
+                    index = df.index[df['id'] == pt_id].tolist()                                       
+                    df_newRecord = pd.DataFrame.from_records([patient])
+
+                    if len(index) > 0: 
+                        df.loc[index] = df_newRecord
+                    else:                     
+                        df = df.append(df_newRecord,ignore_index=True)
+                    
                     #drop indentical patient records
                     df = df.drop_duplicates()
+
                     #overwrite Csv file
-                    df.to_csv('csv_files/patient.csv')              
+                    df.to_csv('csv_files/patient.csv', index=False)    
+
             if resource == 'Condition':
-                #condition = create_condition(data,counter)
-                pass
+                
+                condition = create_condition(data,counter)
+                if exists('csv_files/condition.csv') == False: 
+                    df = pd.DataFrame([condition])
+                    df.to_csv('csv_files/condition.csv', index=False)
+                else: 
+                    df = pd.read_csv('csv_files/condition.csv')
+                    df_newRecord = pd.DataFrame.from_records([condition])
+
+                    df = df.append(df_newRecord,ignore_index=True)
+
+                    #overwrite Csv file
+                    df.to_csv('csv_files/condition.csv', index=False)
+
             if resource == 'Claim':
                 pass
             if resource == 'DiagnosticReport':

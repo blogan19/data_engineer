@@ -8,10 +8,11 @@ class new_condition:
         self.condition = self.get_condition(record)
 
     def get_condition(self,pt_record):
-       # print(f'Patient record created: \n {json.dumps(pt_record, indent=4, sort_keys=True)}')
         c = Condition.parse_obj(pt_record)
 
         pt_condition = {
+            "pt_id": c.subject.reference.replace('urn:uuid:',''),
+            "id": c.id,
             "clinicalStatus": c.clinicalStatus.text,
             "verificationStatus": c.verificationStatus.text,
             "category": c.category[0].coding[0].display,
@@ -37,7 +38,6 @@ class new_condition:
             "evidence": c.evidence,
             "note": c.note
         }
-
         #clean_dates
         def date_clean(date_type):
             #if date is present then reformat it 
